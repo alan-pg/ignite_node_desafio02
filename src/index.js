@@ -9,20 +9,66 @@ app.use(cors());
 
 const users = [];
 
+function checkIfValidUUID(str){
+  const regexExp = /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/gi;
+
+  return regexExp.test(str);
+}
+
 function checksExistsUserAccount(request, response, next) {
-  // Complete aqui
+  const {username } = request.headers
+  const userFound = users.find(user => user.username === username)
+  if(!userFound){
+    response.status(404).json({error:"user not found!"})
+  }
+
+  request.user = userFound
+  return next()
 }
 
 function checksCreateTodosUserAvailability(request, response, next) {
-  // Complete aqui
+  const {user} = request
+  if(user.pro || user.todos.length < 10){
+    return next()
+  }
+  return response.status(403).json({error:'You have exceeded your free plan limit!'})
 }
 
 function checksTodoExists(request, response, next) {
-  // Complete aqui
+  const {username } = request.headers
+  const {id} = request.params
+
+  const isValidId = checkIfValidUUID(id)
+
+  if(!isValidId){
+    return response.status(400).json({error:'id is not a valid uuid!'})
+  }
+
+  const foundUser = users.find(user => user.username === username)
+
+  if(!foundUser){
+    return response.status(404).json({error:'user not found!'})
+  }
+
+  const foundTodo = foundUser.todos.find(todo => todo.id === id)
+
+  if(!foundTodo){
+    return response.status(404).json({error:'t!'})
+  }
+
+  request.todo = foundTodo
+  request.user = foundUser
+  return next()
 }
 
 function findUserById(request, response, next) {
-  // Complete aqui
+  const {id} = request.params
+  const foundUser  = users.find(user => user.id === id)
+  if(!foundUser){
+    return response.status(404).json({error:'user not found'})
+  }
+  request.user = foundUser
+  return next()
 }
 
 app.post('/users', (request, response) => {
